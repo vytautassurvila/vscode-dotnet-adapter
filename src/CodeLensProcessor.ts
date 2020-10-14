@@ -97,9 +97,12 @@ export default class CodeLensProcessor {
 
     async process(suite: DerivitecTestSuiteInfo) {
         const finish = await this.testExplorer.load(false);
+
+        // we report detected tests immediatelly as symbol provider is quite slow
+        finish.pass(suite);
+
         if (!this.ready) {
             this.deferredSuite = suite;
-            finish.pass(suite);
             return;
         }
         this.output.update('Processing CodeLens data');

@@ -88,6 +88,11 @@ export class TestDiscovery {
 	public async Load(): Promise<DerivitecTestSuiteInfo> {
 		this.log.info('Loading tests (starting)');
 
+		const cachedCodelensData = new Map<string, { file?: string, line?: number }>();
+		this.nodeMap.forEach(({ node }) => {
+			cachedCodelensData.set(node.id, { file: node.file, line: node.line });
+		});
+
 		// Clean up previous listing
 		this.nodeMap.forEach(({ node }) => {
 			const path = node.sourceDll;
@@ -170,6 +175,15 @@ export class TestDiscovery {
 			this.log.error(errorMsg);
 			throw errorMsg;
 		}
+
+		// fill in codelens data from previous suite - it will be updated asynchronuosly
+		this.nodeMap.forEach(({ node }) => {
+			const cachedEntry = cachedCodelensData.get(node.id);
+			if (cachedEntry !== undefined) {
+				node.file = cachedEntry.file;
+				node.line = cachedEntry.line;
+			}
+		});
 
 		// Send to CodeLensProcessor; Do NOT wait for it as it'll cause a deadlock
 		this.codeLens.process(this.SuitesInfo);
