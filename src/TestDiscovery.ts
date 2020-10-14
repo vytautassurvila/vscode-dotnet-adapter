@@ -301,26 +301,23 @@ export class TestDiscovery {
 			const namespace = line.replace(`.${className}.${testName}`, "");
 
 			const classId = `${namespace}.${className}`;
-			let classContext = this.nodeMap.get(classId) as DerivitecSuiteContext | undefined;
+			let classNode = fileSuite.children.find(c => c.id === classId) as DerivitecTestSuiteInfo | undefined;
 
-			if (classContext && classContext.node.parent !== fileSuite) {
+			if (classNode && classNode.parent !== fileSuite) {
 				// We need to replace a stale class context
-				classContext = undefined;
+				classNode = undefined;
 			}
 
-			if (!classContext) {
-				classContext = {
-					node: {
-						type: 'suite',
-						id: classId,
-						label: className,
-						sourceDll: file,
-						children: [],
-						parent: fileSuite,
-					}
+			if (!classNode) {
+				classNode = {
+					type: 'suite',
+					id: classId,
+					label: className,
+					sourceDll: file,
+					children: [],
+					parent: fileSuite,
 				};
-				this.nodeMap.set(classContext.node.id, classContext);
-				fileSuite.children.push(classContext.node);
+				fileSuite.children.push(classNode);
 			}
 
 			const testInfo: DerivitecTestInfo = {
@@ -330,13 +327,11 @@ export class TestDiscovery {
 				label: testName,
 				sourceDll: file,
 				skipped: false,
-				parent: classContext.node,
+				parent: classNode,
 			};
 
 			this.loadStatus.added += 1;
-			this.log.info(`adding node: ${line}`);
-			this.nodeMap.set(testInfo.id, { node: testInfo });
-			classContext.node.children.push(testInfo);
+			classNode.children.push(testInfo);
 		}
 
 		if (!fileSuite.children.length) {
@@ -398,6 +393,15 @@ export class TestDiscovery {
 		}
 		this.nodeMap.set(suite.id, { node: suite });
 		suite.parent = parent;
+
+		suite.children.forEach(classContext => {
+			this.nodeMap.set(classContext.id, { node: classContext } as DerivitecSuiteContext);
+
+			(classContext as DerivitecTestSuiteInfo).children.forEach(testInfo => {
+				this.log.info(`adding node: ${testInfo.id}`);
+				this.nodeMap.set(testInfo.id, { node: testInfo } as DerivitecTestContext);
+			})
+		});
 
 		/*
 		let inserted = false;
