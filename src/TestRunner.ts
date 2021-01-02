@@ -68,7 +68,6 @@ export class TestRunner {
 					limit(async () => {
 						const nodeContext = this.nodeMap.get(id);
 						if (nodeContext && !this.CancellationInProgress) {
-							// probably we should consider separate output channels per test run/file
 							this.output.update(`${nodeContext.node.id} ${nodeContext.node.type} started`);
 							await this.RunTest(nodeContext.node, isDebug);
 							this.output.update(`${nodeContext.node.id} ${nodeContext.node.type} complete`);

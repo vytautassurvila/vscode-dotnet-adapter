@@ -93,12 +93,18 @@ ${this.log.join('\n')}`);
     getTestOutputHandler(id: string) {
         this.update(`${id} running`);
         const stopLoader = this.loader();
+        const logLines = [] as string[];
         this.outputChannel.show(true);
-        this.outputChannel.appendLine(`[${new Date().toISOString()}] Test output for ${id} begins...`);
+        logLines.push(`[${new Date().toISOString()}] Test output for ${id} begins...\n`);
         return {
-            print: (...data: string[]) => this.outputChannel.append(data.join(' ')),
+            print: (...data: string[]) => {
+                logLines.push(data.join(' '));
+            },
             finish: () => {
-                this.outputChannel.appendLine(`[${getDate()}] Test output for ${id} ends...`);
+                logLines.push(`[${getDate()}] Test output for ${id} ends...\n`);
+                logLines.forEach(line => {
+                    this.outputChannel.append(line);
+                });
                 stopLoader();
                 this.update(`${id} finished`);
             }
